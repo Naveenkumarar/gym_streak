@@ -96,10 +96,9 @@ export async function deleteExercise(id: number) {
     });
     revalidatePath('/exercises');
     revalidatePath('/');
-    return { success: true };
   } catch (error) {
     console.error('Error deleting exercise:', error);
-    return { success: false, error: 'Failed to delete exercise' };
+    throw new Error('Failed to delete exercise');
   }
 }
 
@@ -148,10 +147,9 @@ export async function deleteCardio(id: number) {
     });
     revalidatePath('/cardio');
     revalidatePath('/');
-    return { success: true };
   } catch (error) {
     console.error('Error deleting cardio:', error);
-    return { success: false, error: 'Failed to delete cardio' };
+    throw new Error('Failed to delete cardio');
   }
 }
 
@@ -198,10 +196,9 @@ export async function deleteFood(id: number) {
     });
     revalidatePath('/food');
     revalidatePath('/');
-    return { success: true };
   } catch (error) {
     console.error('Error deleting food:', error);
-    return { success: false, error: 'Failed to delete food' };
+    throw new Error('Failed to delete food');
   }
 }
 
@@ -259,10 +256,9 @@ export async function deleteWeight(id: number) {
     });
     revalidatePath('/weight');
     revalidatePath('/');
-    return { success: true };
   } catch (error) {
     console.error('Error deleting weight:', error);
-    return { success: false, error: 'Failed to delete weight' };
+    throw new Error('Failed to delete weight');
   }
 }
 
