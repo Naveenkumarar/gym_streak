@@ -1,6 +1,6 @@
 'use server';
 
-import { sql } from './db';
+import { executeQuery } from './db';
 import { revalidatePath } from 'next/cache';
 
 // Types
@@ -46,10 +46,12 @@ export async function addExercise(data: {
   category: string;
 }) {
   try {
-    await sql`
-      INSERT INTO exercises (date, day_of_week, exercise_name, category)
-      VALUES (${data.date}, ${data.day_of_week}, ${data.exercise_name}, ${data.category})
-    `;
+    await executeQuery(async (client) => {
+      await client.sql`
+        INSERT INTO exercises (date, day_of_week, exercise_name, category)
+        VALUES (${data.date}, ${data.day_of_week}, ${data.exercise_name}, ${data.category})
+      `;
+    });
     revalidatePath('/exercises');
     revalidatePath('/');
     return { success: true };
@@ -61,10 +63,12 @@ export async function addExercise(data: {
 
 export async function getExercisesByDate(date: string) {
   try {
-    const result = await sql`
-      SELECT * FROM exercises WHERE date = ${date} ORDER BY created_at DESC
-    `;
-    return result.rows as Exercise[];
+    return await executeQuery(async (client) => {
+      const result = await client.sql`
+        SELECT * FROM exercises WHERE date = ${date} ORDER BY created_at DESC
+      `;
+      return result.rows as Exercise[];
+    });
   } catch (error) {
     console.error('Error fetching exercises:', error);
     return [];
@@ -73,10 +77,12 @@ export async function getExercisesByDate(date: string) {
 
 export async function getExercisesByDayOfWeek(dayOfWeek: string) {
   try {
-    const result = await sql`
-      SELECT * FROM exercises WHERE day_of_week = ${dayOfWeek} ORDER BY date DESC, created_at DESC
-    `;
-    return result.rows as Exercise[];
+    return await executeQuery(async (client) => {
+      const result = await client.sql`
+        SELECT * FROM exercises WHERE day_of_week = ${dayOfWeek} ORDER BY date DESC, created_at DESC
+      `;
+      return result.rows as Exercise[];
+    });
   } catch (error) {
     console.error('Error fetching exercises:', error);
     return [];
@@ -85,7 +91,9 @@ export async function getExercisesByDayOfWeek(dayOfWeek: string) {
 
 export async function deleteExercise(id: number) {
   try {
-    await sql`DELETE FROM exercises WHERE id = ${id}`;
+    await executeQuery(async (client) => {
+      await client.sql`DELETE FROM exercises WHERE id = ${id}`;
+    });
     revalidatePath('/exercises');
     revalidatePath('/');
     return { success: true };
@@ -104,10 +112,12 @@ export async function addCardio(data: {
   calories?: number;
 }) {
   try {
-    await sql`
-      INSERT INTO cardio (date, activity, duration_minutes, distance_km, calories)
-      VALUES (${data.date}, ${data.activity}, ${data.duration_minutes}, ${data.distance_km || null}, ${data.calories || null})
-    `;
+    await executeQuery(async (client) => {
+      await client.sql`
+        INSERT INTO cardio (date, activity, duration_minutes, distance_km, calories)
+        VALUES (${data.date}, ${data.activity}, ${data.duration_minutes}, ${data.distance_km || null}, ${data.calories || null})
+      `;
+    });
     revalidatePath('/cardio');
     revalidatePath('/');
     return { success: true };
@@ -119,10 +129,12 @@ export async function addCardio(data: {
 
 export async function getCardioByDate(date: string) {
   try {
-    const result = await sql`
-      SELECT * FROM cardio WHERE date = ${date} ORDER BY created_at DESC
-    `;
-    return result.rows as Cardio[];
+    return await executeQuery(async (client) => {
+      const result = await client.sql`
+        SELECT * FROM cardio WHERE date = ${date} ORDER BY created_at DESC
+      `;
+      return result.rows as Cardio[];
+    });
   } catch (error) {
     console.error('Error fetching cardio:', error);
     return [];
@@ -131,7 +143,9 @@ export async function getCardioByDate(date: string) {
 
 export async function deleteCardio(id: number) {
   try {
-    await sql`DELETE FROM cardio WHERE id = ${id}`;
+    await executeQuery(async (client) => {
+      await client.sql`DELETE FROM cardio WHERE id = ${id}`;
+    });
     revalidatePath('/cardio');
     revalidatePath('/');
     return { success: true };
@@ -148,10 +162,12 @@ export async function addFood(data: {
   meal_time: string;
 }) {
   try {
-    await sql`
-      INSERT INTO food_intake (date, food_item, meal_time)
-      VALUES (${data.date}, ${data.food_item}, ${data.meal_time})
-    `;
+    await executeQuery(async (client) => {
+      await client.sql`
+        INSERT INTO food_intake (date, food_item, meal_time)
+        VALUES (${data.date}, ${data.food_item}, ${data.meal_time})
+      `;
+    });
     revalidatePath('/food');
     revalidatePath('/');
     return { success: true };
@@ -163,10 +179,12 @@ export async function addFood(data: {
 
 export async function getFoodByDate(date: string) {
   try {
-    const result = await sql`
-      SELECT * FROM food_intake WHERE date = ${date} ORDER BY created_at ASC
-    `;
-    return result.rows as FoodIntake[];
+    return await executeQuery(async (client) => {
+      const result = await client.sql`
+        SELECT * FROM food_intake WHERE date = ${date} ORDER BY created_at ASC
+      `;
+      return result.rows as FoodIntake[];
+    });
   } catch (error) {
     console.error('Error fetching food:', error);
     return [];
@@ -175,7 +193,9 @@ export async function getFoodByDate(date: string) {
 
 export async function deleteFood(id: number) {
   try {
-    await sql`DELETE FROM food_intake WHERE id = ${id}`;
+    await executeQuery(async (client) => {
+      await client.sql`DELETE FROM food_intake WHERE id = ${id}`;
+    });
     revalidatePath('/food');
     revalidatePath('/');
     return { success: true };
@@ -188,11 +208,13 @@ export async function deleteFood(id: number) {
 // Weight History Actions
 export async function addWeight(data: { date: string; weight_kg: number }) {
   try {
-    await sql`
-      INSERT INTO weight_history (date, weight_kg)
-      VALUES (${data.date}, ${data.weight_kg})
-      ON CONFLICT (date) DO UPDATE SET weight_kg = ${data.weight_kg}
-    `;
+    await executeQuery(async (client) => {
+      await client.sql`
+        INSERT INTO weight_history (date, weight_kg)
+        VALUES (${data.date}, ${data.weight_kg})
+        ON CONFLICT (date) DO UPDATE SET weight_kg = ${data.weight_kg}
+      `;
+    });
     revalidatePath('/weight');
     revalidatePath('/');
     return { success: true };
@@ -204,10 +226,12 @@ export async function addWeight(data: { date: string; weight_kg: number }) {
 
 export async function getWeightHistory() {
   try {
-    const result = await sql`
-      SELECT * FROM weight_history ORDER BY date DESC
-    `;
-    return result.rows as WeightHistory[];
+    return await executeQuery(async (client) => {
+      const result = await client.sql`
+        SELECT * FROM weight_history ORDER BY date DESC
+      `;
+      return result.rows as WeightHistory[];
+    });
   } catch (error) {
     console.error('Error fetching weight history:', error);
     return [];
@@ -216,10 +240,12 @@ export async function getWeightHistory() {
 
 export async function getLatestWeight() {
   try {
-    const result = await sql`
-      SELECT * FROM weight_history ORDER BY date DESC LIMIT 1
-    `;
-    return result.rows[0] as WeightHistory | undefined;
+    return await executeQuery(async (client) => {
+      const result = await client.sql`
+        SELECT * FROM weight_history ORDER BY date DESC LIMIT 1
+      `;
+      return result.rows[0] as WeightHistory | undefined;
+    });
   } catch (error) {
     console.error('Error fetching latest weight:', error);
     return undefined;
@@ -228,7 +254,9 @@ export async function getLatestWeight() {
 
 export async function deleteWeight(id: number) {
   try {
-    await sql`DELETE FROM weight_history WHERE id = ${id}`;
+    await executeQuery(async (client) => {
+      await client.sql`DELETE FROM weight_history WHERE id = ${id}`;
+    });
     revalidatePath('/weight');
     revalidatePath('/');
     return { success: true };

@@ -1,10 +1,21 @@
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
+
+// Get database client
+function getClient() {
+  return createClient({
+    connectionString: process.env.POSTGRES_URL,
+  });
+}
 
 // Initialize database tables
 export async function initDatabase() {
+  const client = getClient();
+
   try {
+    await client.connect();
+
     // Exercises table
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS exercises (
         id SERIAL PRIMARY KEY,
         date TEXT NOT NULL,
@@ -15,12 +26,12 @@ export async function initDatabase() {
       )
     `;
 
-    await sql`
+    await client.sql`
       CREATE INDEX IF NOT EXISTS idx_exercises_date ON exercises(date)
     `;
 
     // Cardio table
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS cardio (
         id SERIAL PRIMARY KEY,
         date TEXT NOT NULL,
@@ -32,12 +43,12 @@ export async function initDatabase() {
       )
     `;
 
-    await sql`
+    await client.sql`
       CREATE INDEX IF NOT EXISTS idx_cardio_date ON cardio(date)
     `;
 
     // Food intake table
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS food_intake (
         id SERIAL PRIMARY KEY,
         date TEXT NOT NULL,
@@ -47,12 +58,12 @@ export async function initDatabase() {
       )
     `;
 
-    await sql`
+    await client.sql`
       CREATE INDEX IF NOT EXISTS idx_food_date ON food_intake(date)
     `;
 
     // Weight history table
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS weight_history (
         id SERIAL PRIMARY KEY,
         date TEXT NOT NULL UNIQUE,
@@ -61,14 +72,28 @@ export async function initDatabase() {
       )
     `;
 
-    await sql`
+    await client.sql`
       CREATE INDEX IF NOT EXISTS idx_weight_date ON weight_history(date)
     `;
 
     console.log('Database tables initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
+    throw error;
+  } finally {
+    await client.end();
   }
 }
 
-export { sql };
+// Helper function to execute queries
+export async function executeQuery<T>(queryFn: (client: any) => Promise<T>): Promise<T> {
+  const client = getClient();
+  try {
+    await client.connect();
+    return await queryFn(client);
+  } finally {
+    await client.end();
+  }
+}
+
+export { createClient };
